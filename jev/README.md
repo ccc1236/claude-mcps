@@ -1,4 +1,4 @@
-# jev — TypeSafe Jev (System One) MCP server
+# jev - TypeSafe Jev (System One) MCP server
 
 Exposes TypeSafe's **Jev** model as typed-judgment tools for Claude Code. Jev
 returns typed, calibrated decisions (not text), so code can branch on them.
@@ -7,7 +7,7 @@ returns typed, calibrated decisions (not text), so code can branch on them.
 | Tool | Primitive | Returns |
 |------|-----------|---------|
 | `jev_classify(state, options, instructions)` | Choice | `choice`, `probabilities`, `confidence` |
-| `jev_check(state, condition)` | Noul | `noul` (0–1 probability the answer is yes) |
+| `jev_check(state, condition)` | Noul | `noul` (0-1 probability the answer is yes) |
 | `jev_score(state, dimension, levels)` | Score | `score`, `legend`, `probabilities`, `confidence` |
 
 ## Requirements
@@ -18,8 +18,8 @@ pip install -r requirements.txt   # pins mcp<2 (wrapper uses the FastMCP API)
 > `FastMCP`→`MCPServer`, so `mcp<2` is pinned. Also needs `typing_extensions>=4.15`.
 
 ## Env (required)
-- `TYPESAFE_API_KEY` — your TypeSafe API key. **Never commit this.**
-- `TYPESAFE_MODEL` — optional, defaults to `jev-latest`.
+- `TYPESAFE_API_KEY` - your TypeSafe API key. **Never commit this.**
+- `TYPESAFE_MODEL` - optional, defaults to `jev-latest`.
 
 ## Install (user scope = available in all sessions)
 ```bash
@@ -64,7 +64,7 @@ escalate below ~0.5). `jev_check` returns `{ "noul": 0.0..1.0 }` (probability th
 condition is yes); `jev_score` returns a `score` plus a `legend` for the levels.
 
 ## Scope & notes
-- Not a coding assistant — use for high-volume / confidence-gated classify,
+- Not a coding assistant - use for high-volume / confidence-gated classify,
   check, score inside pipelines, not one-off chat judgments.
-- Default TypeSafe data retention is non-zero (ZDR is enterprise-only) — keep
+- Default TypeSafe data retention is non-zero (ZDR is enterprise-only) - keep
   sensitive data out.
