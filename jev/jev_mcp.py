@@ -14,17 +14,25 @@ from __future__ import annotations
 
 import json
 import os
+import time
+import urllib.error
 import urllib.request
 from mcp.server.fastmcp import FastMCP
 
 API_URL = "https://api.typesafe.ai/v1/systemone"
 MODEL = os.environ.get("TYPESAFE_MODEL", "jev-latest")
+RETRY_STATUS = {429, 500, 502, 503, 504}  # transient; TypeSafe returns intermittent 503s
+MAX_ATTEMPTS = 4
 
 mcp = FastMCP("jev")
 
 
 def _ask(state: str, question: dict) -> dict:
-    """POST one question to Jev and return its answer object."""
+    """POST one question to Jev and return its answer object.
+
+    Retries transient errors (429/5xx) with exponential backoff so a passing
+    TypeSafe blip does not surface as a failed tool call.
+    """
     key = os.environ.get("TYPESAFE_API_KEY")
     if not key:
         raise RuntimeError("TYPESAFE_API_KEY is not set")
@@ -35,8 +43,18 @@ def _ask(state: str, question: dict) -> dict:
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.load(resp)["answers"]["q"]
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                return json.load(resp)["answers"]["q"]
+        except urllib.error.HTTPError as err:
+            if err.code not in RETRY_STATUS or attempt == MAX_ATTEMPTS:
+                raise
+        except urllib.error.URLError:
+            if attempt == MAX_ATTEMPTS:
+                raise
+        time.sleep(0.5 * 2 ** (attempt - 1))  # 0.5s, 1s, 2s
+    raise RuntimeError("unreachable")
 
 
 @mcp.tool()
